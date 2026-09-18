@@ -28,11 +28,17 @@ jobs:
       - name: Patch depot_tools for system git
         shell: pwsh
         run: |
+          Add-Content $env:GITHUB_PATH "C:\Program Files\Git\cmd"
+          Add-Content $env:GITHUB_PATH "C:\Program Files\Git\bin"
           Remove-Item C:\depot_tools\git.bat -Force -ErrorAction SilentlyContinue
           Get-ChildItem C:\depot_tools\*.py | ForEach-Object {
             (Get-Content $_.FullName -Raw) -replace "git_exe = 'git\.bat' if sys\.platform\.startswith\('win'\) else 'git'", "git_exe = 'git'" -replace "'git\.bat'", "'git'" | Set-Content $_.FullName
           }
-      - name: Configure
+          $gc = "C:\depot_tools\git_cache.py"
+          $t = Get-Content $gc -Raw
+          $t = $t -replace "def GetCachePath\(\):", "def GetCachePath():`r`n    return None"
+          Set-Content $gc $t
+          git --version
         shell: pwsh
         run: |
           Add-Content $env:GITHUB_PATH "C:\depot_tools"
