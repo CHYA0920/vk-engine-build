@@ -1,6 +1,8 @@
 name: Build Windows VK Engine
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
 jobs:
   build:
     runs-on: windows-latest
