@@ -28,21 +28,26 @@ jobs:
       - name: Patch depot_tools for system git
         shell: python
         run: |
-          import pathlib, re
+          import pathlib, subprocess
           d = pathlib.Path(r"C:\depot_tools")
-          for f in d.glob("*.py"):
-              t = f.read_text(encoding="utf-8", errors="replace")
-              orig = t
-              t = t.replace("git_exe = 'git.bat' if sys.platform.startswith('win') else 'git'", "git_exe = 'git'")
-              t = t.replace("'git.bat'", "'git'")
-              if f.name == "git_cache.py":
-                  t = re.sub(r"def GetCachePath\([^)]*\):", "def GetCachePath(*a, **k):\n  return None", t, count=1)
-              if t != orig:
-                  f.write_text(t, encoding="utf-8")
-                  print("patched", f.name)
-          gc = d / "git_cache.py"
-          assert "return None" in gc.read_text(encoding="utf-8"), "git cache short-circuit missing"
-          print("patch done")
+          subprocess.run(["git", "-C", str(d), "checkout", "--", "git_cache.py"], check=True)
+          Remove = d / "git.bat"
+          Remove.unlink(missing_ok=True)
+          scm = d / "gclient_scm.py"
+          lines = scm.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
+          done = False
+          for i, l in enumerate(lines):
+              if "def cache_dir(self):" in l:
+                  indent = l[:len(l) - len(l.lstrip())]
+                  j = i + 1
+                  while j < len(lines) and (lines[j].strip() == "" or len(lines[j]) - len(lines[j].lstrip()) > len(indent)):
+                      j += 1
+                  lines[i+1:j] = [indent + "    return None\n"]
+                  done = True
+                  break
+          assert done, "cache_dir not found"
+          scm.write_text("".join(lines), encoding="utf-8")
+          print("cache_dir neutralized")
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
