@@ -120,7 +120,7 @@ jobs:
           }
           cd engine\src
           python flutter\tools\gn --unoptimized
-          python -c "import pathlib; p=pathlib.Path('out/host_debug_unopt/environment.x64'); d=p.read_bytes().decode('utf-8','replace'); d=d.replace('10.0.22621.0','10.0.26100.0'); d=d.replace(chr(92)+chr(92),chr(92)); p.write_bytes(d.encode('utf-8')); parts=[x for x in d.split(chr(0)) if x.startswith('LIB=')]; print(parts[0][:400] if parts else 'LIB=MISSING')" 
+          python -c "import pathlib; p=pathlib.Path('out/host_debug_unopt/environment.x64'); d=p.read_bytes().decode('utf-8','replace'); import re as _re; d2=_re.sub(r'LIB=([^\0]*)', lambda mm: 'LIB='+mm.group(1).replace('10.0.22621.0','10.0.26100.0').replace('\\\\','\\'), d); p.write_bytes(d2.encode('utf-8')); parts=[x for x in d2.split(chr(0)) if x.startswith('LIB=')]; print(parts[0][:500] if parts else 'LIB=MISSING')" 
 
       - name: ninja
         shell: pwsh
