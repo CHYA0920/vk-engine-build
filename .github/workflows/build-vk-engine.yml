@@ -51,6 +51,9 @@ jobs:
           bat = d / "git.bat"
           bat.write_text('@echo off\r\n@"C:\\Program Files\\Git\\cmd\\git.exe" %*\r\n', encoding="ascii")
           print("git.bat shim created")
+          (d / "ninja.bat").unlink(missing_ok=True)
+          (d / "ninja.exe").unlink(missing_ok=True)
+          print("depot_tools ninja removed")
           st = pathlib.Path("engine/src/build/toolchain/win/setup_toolchain.py")
           t2 = st.read_text(encoding="utf-8")
           t2 = t2.replace("if not os.path.exists(part) and len(part) != 0:", "if False:")
@@ -73,6 +76,13 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
+      - name: Install ninja
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-win.zip" -OutFile C:\ninja.zip
+          Expand-Archive C:\ninja.zip C:\ninja-tools -Force
+          Add-Content $env:GITHUB_PATH "C:\ninja-tools"
+          ninja --version
       - name: gn
         shell: pwsh
         run: |
