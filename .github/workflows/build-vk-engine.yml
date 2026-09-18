@@ -48,6 +48,9 @@ jobs:
           assert done, "cache_dir not found"
           scm.write_text("".join(lines), encoding="utf-8")
           print("cache_dir neutralized")
+          bat = d / "git.bat"
+          bat.write_text('@echo off\r\n@"C:\\Program Files\\Git\\cmd\\git.exe" %*\r\n', encoding="ascii")
+          print("git.bat shim created")
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
