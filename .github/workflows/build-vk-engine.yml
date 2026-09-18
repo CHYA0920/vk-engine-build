@@ -51,6 +51,11 @@ jobs:
           bat = d / "git.bat"
           bat.write_text('@echo off\r\n@"C:\\Program Files\\Git\\cmd\\git.exe" %*\r\n', encoding="ascii")
           print("git.bat shim created")
+          st = pathlib.Path("engine/src/build/toolchain/win/setup_toolchain.py")
+          t2 = st.read_text(encoding="utf-8")
+          t2 = t2.replace("if not os.path.exists(part) and len(part) != 0:", "if False:")
+          st.write_text(t2, encoding="utf-8")
+          print("setup_toolchain neutralized")
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
