@@ -1,0 +1,55 @@
+name: Build Windows VK Engine
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 330
+    steps:
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false
+      - name: Checkout VK engine branch
+        uses: actions/checkout@v4
+        with:
+          repository: sero583/flutter
+          ref: impeller-vulkan-desktop
+          fetch-depth: 1
+      - name: Install depot_tools
+        shell: pwsh
+        run: git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git C:\depot_tools
+      - name: Configure
+        shell: pwsh
+        run: |
+          Add-Content $env:GITHUB_PATH "C:\depot_tools"
+          Add-Content $env:GITHUB_ENV "DEPOT_TOOLS_UPDATE=0"
+          Add-Content $env:GITHUB_ENV "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
+          Copy-Item engine\scripts\standard.gclient .gclient
+      - name: gclient sync
+        shell: pwsh
+        run: gclient sync --no-history -j4
+      - name: gn
+        shell: pwsh
+        run: |
+          cd engine\src
+          python flutter\tools\gn --unoptimized
+      - name: ninja
+        shell: pwsh
+        run: |
+          cd engine\src
+          ninja -C out\host_debug_unopt
+      - name: Upload engine
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-vk-engine
+          path: |
+            engine/src/out/host_debug_unopt/flutter_windows.dll
+            engine/src/out/host_debug_unopt/icudtl.dat
+            engine/src/out/host_debug_unopt/flutter_tester.exe
