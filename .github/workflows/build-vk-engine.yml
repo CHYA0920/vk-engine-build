@@ -36,7 +36,7 @@ jobs:
               t = t.replace("git_exe = 'git.bat' if sys.platform.startswith('win') else 'git'", "git_exe = 'git'")
               t = t.replace("'git.bat'", "'git'")
               if f.name == "git_cache.py":
-                  t = re.sub(r"def GetCachePath\([^)]*\):", "def GetCachePath(*a, **k):\n    return None", t, count=1)
+                  t = re.sub(r"def GetCachePath\([^)]*\):", "def GetCachePath(*a, **k):\n  return None", t, count=1)
               if t != orig:
                   f.write_text(t, encoding="utf-8")
                   print("patched", f.name)
