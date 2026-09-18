@@ -71,6 +71,8 @@ jobs:
       - name: gn
         shell: pwsh
         run: |
+          $env:INCLUDE = (($env:INCLUDE -split ';') | Where-Object { $_ -and (Test-Path $_) }) -join ';'
+          $env:LIB = (($env:LIB -split ';') | Where-Object { $_ -and (Test-Path $_) }) -join ';'
           cd engine\src
           python flutter\tools\gn --unoptimized
       - name: ninja
