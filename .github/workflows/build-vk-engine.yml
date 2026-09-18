@@ -115,13 +115,14 @@ jobs:
           $sdkRoot = "C:\Program Files (x86)\Windows Kits\10\Lib"
           $ver = (Get-ChildItem $sdkRoot -Directory -ErrorAction SilentlyContinue | Sort-Object Name | Select-Object -Last 1).Name
           Write-Host "SDK lib version found: $ver"
-          Write-Host "LIB before: $env:LIB"
           if ($ver) {
             $env:LIB = "$sdkRoot\$ver\ucrt\x64;$sdkRoot\$ver\um\x64;" + $env:LIB
           }
-          Write-Host "LIB after: $env:LIB"
           cd engine\src
           python flutter\tools\gn --unoptimized
+          Write-Host "=== environment.x64 LIB dump ==="
+          Get-Content out\host_debug_unopt\environment.x64 -ErrorAction SilentlyContinue | Select-String -Pattern "^LIB=" | ForEach-Object { $_.Line.Substring(0, [Math]::Min(600, $_.Line.Length)) }
+          Write-Host "=== dump end ==="
       - name: ninja
         shell: pwsh
         run: |
