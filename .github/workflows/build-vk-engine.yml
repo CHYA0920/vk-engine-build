@@ -64,6 +64,10 @@ jobs:
       - name: gclient sync
         shell: pwsh
         run: gclient sync --no-history -j4 --nohooks
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
       - name: gn
         shell: pwsh
         run: |
