@@ -60,7 +60,7 @@ jobs:
           Copy-Item engine\scripts\standard.gclient .gclient
       - name: gclient sync
         shell: pwsh
-        run: gclient sync --no-history -j4 --no-hooks
+        run: gclient sync --no-history -j4 --nohooks
       - name: gn
         shell: pwsh
         run: |
