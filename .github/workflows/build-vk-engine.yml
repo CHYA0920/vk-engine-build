@@ -45,6 +45,26 @@ jobs:
                   lines[i+1:j] = [indent + "    return None\n"]
                   done = True
                   break
+      - name: Patch depot_tools for system git
+        shell: python
+        run: |
+          import pathlib, subprocess
+          d = pathlib.Path(r"C:\depot_tools")
+          subprocess.run(["git", "-C", str(d), "checkout", "--", "git_cache.py"], check=True)
+          Remove = d / "git.bat"
+          Remove.unlink(missing_ok=True)
+          scm = d / "gclient_scm.py"
+          lines = scm.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
+          done = False
+          for i, l in enumerate(lines):
+              if "def cache_dir(self):" in l:
+                  indent = l[:len(l) - len(l.lstrip())]
+                  j = i + 1
+                  while j < len(lines) and (lines[j].strip() == "" or len(lines[j]) - len(lines[j].lstrip()) > len(indent)):
+                      j += 1
+                  lines[i+1:j] = [indent + "    return None\n"]
+                  done = True
+                  break
           assert done, "cache_dir not found"
           scm.write_text("".join(lines), encoding="utf-8")
           print("cache_dir neutralized")
@@ -57,8 +77,9 @@ jobs:
           st = pathlib.Path("engine/src/build/toolchain/win/setup_toolchain.py")
           t2 = st.read_text(encoding="utf-8")
           t2 = t2.replace("if not os.path.exists(part) and len(part) != 0:", "if False:")
+          t2 = t2.replace("SDK_VERSION = '10.0.28000.0'", "SDK_VERSION = '10.0.26100.0'")
           st.write_text(t2, encoding="utf-8")
-          print("setup_toolchain neutralized")
+          print("setup_toolchain neutralized + SDK version pinned to 10.0.26100.0")
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
