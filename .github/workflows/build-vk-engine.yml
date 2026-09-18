@@ -26,19 +26,26 @@ jobs:
         shell: pwsh
         run: git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git C:\depot_tools
       - name: Patch depot_tools for system git
-        shell: pwsh
+        shell: python
         run: |
-          Add-Content $env:GITHUB_PATH "C:\Program Files\Git\cmd"
-          Add-Content $env:GITHUB_PATH "C:\Program Files\Git\bin"
-          Remove-Item C:\depot_tools\git.bat -Force -ErrorAction SilentlyContinue
-          Get-ChildItem C:\depot_tools\*.py | ForEach-Object {
-            (Get-Content $_.FullName -Raw) -replace "git_exe = 'git\.bat' if sys\.platform\.startswith\('win'\) else 'git'", "git_exe = 'git'" -replace "'git\.bat'", "'git'" | Set-Content $_.FullName
-          }
-          $gc = "C:\depot_tools\git_cache.py"
-          $t = Get-Content $gc -Raw
-          $t = $t -replace "def GetCachePath\(\):", "def GetCachePath():`r`n    return None"
-          Set-Content $gc $t
-          git --version
+          import pathlib, re
+          d = pathlib.Path(r"C:\depot_tools")
+          for f in d.glob("*.py"):
+              t = f.read_text(encoding="utf-8", errors="replace")
+              orig = t
+              t = t.replace("git_exe = 'git.bat' if sys.platform.startswith('win') else 'git'", "git_exe = 'git'")
+              t = t.replace("'git.bat'", "'git'")
+              if f.name == "git_cache.py":
+                  t = re.sub(r"def GetCachePath\([^)]*\):", "def GetCachePath(*a, **k):\n    return None", t, count=1)
+              if t != orig:
+                  f.write_text(t, encoding="utf-8")
+                  print("patched", f.name)
+          gc = d / "git_cache.py"
+          assert "return None" in gc.read_text(encoding="utf-8"), "git cache short-circuit missing"
+          print("patch done")
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
       - name: Configure
         shell: pwsh
         run: |
