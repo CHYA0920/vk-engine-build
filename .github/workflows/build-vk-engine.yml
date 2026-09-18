@@ -36,12 +36,13 @@ jobs:
           }
           $gc = "C:\depot_tools\git_cache.py"
           $t = Get-Content $gc -Raw
-          $t = $t -replace "def GetCachePath\([^)]*\):", "def GetCachePath():`r`n    return None"
+          $t = $t -replace "def GetCachePath\(\):", "def GetCachePath():`r`n    return None"
           Set-Content $gc $t
           git --version
       - name: Configure
         shell: pwsh
         run: |
+          Add-Content $env:GITHUB_PATH "C:\depot_tools"
           Add-Content $env:GITHUB_ENV "DEPOT_TOOLS_UPDATE=0"
           Add-Content $env:GITHUB_ENV "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
           Copy-Item engine\scripts\standard.gclient .gclient
