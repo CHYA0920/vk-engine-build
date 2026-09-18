@@ -120,7 +120,20 @@ jobs:
           }
           cd engine\src
           python flutter\tools\gn --unoptimized
-          python -c "import pathlib,os; base=pathlib.Path('out/host_debug_unopt'); print('CWD:', os.getcwd()); import shutil as _sh; print('link-resolves-to:', _sh.which('link.exe')); print('lib-resolves-to:', _sh.which('lib.exe')); sdk_root=pathlib.Path('C:/Program Files (x86)/Windows Kits/10/Lib'); um=(sdk_root/'10.0.26100.0/um/x64'); print('advapi32-exists:', (um/'advapi32.lib').exists()); raw=(base/'environment.x64').read_bytes(); d=raw.decode('utf-8'); import re as _re; d2=_re.sub(r'LIB=([^\x00]*)', lambda mm: 'LIB='+mm.group(1).replace('10.0.22621.0','10.0.26100.0').replace('\\\\','\\'), d); (base/'environment.x64').write_bytes(d2.encode('utf-8')); raw2=(base/'environment.x64').read_bytes(); parts=[x for x in raw2.decode('utf-8').split(chr(0)) if x.startswith('LIB=')]; print('FINAL-LIB:', parts[0][:600] if parts else 'MISSING')"  
+          python -c "import pathlib,os; base=pathlib.Path('out/host_debug_unopt'); print('CWD:', os.getcwd());
+tw = pathlib.Path('out/host_debug_unopt/build/toolchain/win/tool_wrapper.py')
+print('tool_wrapper-in-out:', tw.exists())
+pairs = pathlib.Path('out/host_debug_unopt/environment.x64').read_bytes().decode('utf-8')[:-2].split(chr(0))
+libkv = [p for p in pairs if p.upper().startswith('LIB=')]
+print('snapshot-LIB-keys:', libkv[0][:80] if libkv else 'NONE', '| total keys:', len(pairs))
+import os as _os
+link_dir = _os.path.dirname(_sh.which('link.exe'))
+full_env = dict(_os.environ)
+full_env['LIB'] = libkv[0][4:] if libkv else _os.environ.get('LIB','')
+print('LIB-for-test:', full_env['LIB'][:200])
+r = _os.system('cd out/host_debug_unopt && echo "int main(){return 0;}" > t_main.cpp && "' + link_dir + '\\cl.exe" /nologo /c t_main.cpp /Fot_main.obj 2>&1 && "' + link_dir + '\\link.exe" /nologo /OUT:t_test.exe t_main.obj advapi32.lib user32.lib')
+print('DIRECT-LINK-RC:', r)
+ raw=(base/'environment.x64').read_bytes(); d=raw.decode('utf-8'); import re as _re; d2=_re.sub(r'LIB=([^\x00]*)', lambda mm: 'LIB='+mm.group(1).replace('10.0.22621.0','10.0.26100.0').replace('\\\\','\\'), d); (base/'environment.x64').write_bytes(d2.encode('utf-8')); raw2=(base/'environment.x64').read_bytes(); parts=[x for x in raw2.decode('utf-8').split(chr(0)) if x.startswith('LIB=')]; print('FINAL-LIB:', parts[0][:600] if parts else 'MISSING')"  
 
       - name: ninja
         shell: pwsh
