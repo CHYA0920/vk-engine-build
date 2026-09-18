@@ -72,6 +72,11 @@ jobs:
       - name: gclient sync
         shell: pwsh
         run: gclient sync --no-history -j4 --nohooks
+      - name: Run dart package hooks manually
+        shell: pwsh
+        run: |
+          python engine\src\flutter\third_party\dart\tools\generate_package_config.py
+          python engine\src\flutter\tools\pub_get_offline.py
       - name: Setup MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
         with:
