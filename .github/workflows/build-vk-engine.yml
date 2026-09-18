@@ -91,8 +91,14 @@ jobs:
       - name: gn
         shell: pwsh
         run: |
-          $env:INCLUDE = (($env:INCLUDE -split ';') | Where-Object { $_ -and (Test-Path $_) }) -join ';'
-          $env:LIB = (($env:LIB -split ';') | Where-Object { $_ -and (Test-Path $_) }) -join ';'
+          $sdkRoot = "C:\Program Files (x86)\Windows Kits\10\Lib"
+          $ver = (Get-ChildItem $sdkRoot -Directory -ErrorAction SilentlyContinue | Sort-Object Name | Select-Object -Last 1).Name
+          Write-Host "SDK lib version found: $ver"
+          Write-Host "LIB before: $env:LIB"
+          if ($ver) {
+            $env:LIB = "$sdkRoot\$ver\ucrt\x64;$sdkRoot\$ver\um\x64;" + $env:LIB
+          }
+          Write-Host "LIB after: $env:LIB"
           cd engine\src
           python flutter\tools\gn --unoptimized
       - name: ninja
